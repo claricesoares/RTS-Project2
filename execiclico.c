@@ -3,68 +3,113 @@
 #include <string.h>
 #include <json-c/json.h>
 
-struct Task {
+struct Task
+{
     char id[20];
     int periodo;
     int tempo_execucao;
     int prioridade;
 };
 
-int mdc(int a, int b) {
+int mdc(int a, int b)
+{
     if (b == 0)
         return a;
     return mdc(b, a % b);
 }
 
-int mmc(int a, int b) {
+int mmc(int a, int b)
+{
     return (a * b) / mdc(a, b);
 }
 
-void calcularCiclos(struct Task tasks[], int n, int *ciclo_primario, int *ciclo_secundario) {
+void calcularCiclos(struct Task tasks[], int n, int *ciclo_primario, int *ciclo_secundario)
+{
     *ciclo_primario = tasks[0].periodo;
     *ciclo_secundario = tasks[0].periodo;
 
-    for (int i = 1; i < n; i++) {
+    for (int i = 1; i < n; i++)
+    {
         *ciclo_primario = mmc(*ciclo_primario, tasks[i].periodo);
         *ciclo_secundario = mdc(*ciclo_secundario, tasks[i].periodo);
     }
 }
 
 // Função de comparação para qsort
-int compararPeriodo(const void *a, const void *b) {
+int compararPeriodo(const void *a, const void *b)
+{
     const struct Task *taskA = (const struct Task *)a;
     const struct Task *taskB = (const struct Task *)b;
-    return taskB->periodo - taskA->periodo; // Ordem decrescente por período
+    return taskA->periodo - taskB->periodo;
 }
 
-void dividirTarefasEmCiclos(struct Task tasks[], int numTasks, int ciclo_primario) {
-    // Ordena as tarefas por período em ordem decrescente
+void dividirTarefasEmCiclos(struct Task tasks[], int numTasks, int ciclo_primario, int ciclo_secundario)
+{
+    // Ordena as tarefas por período em ordem crescente
     qsort(tasks, numTasks, sizeof(struct Task), compararPeriodo);
 
-    // Divide as tarefas em ciclos
-    printf("\nEscalonamento Sugerido (Heuristica: Maior Taxa de Periodicidade Primeiro - HRF):\n");
+    // Array para controlar se cada tarefa já foi executada em um ciclo secundário
+    int *tarefaExecutada = (int *)calloc(numTasks, sizeof(int));
+
+    // Quando tarefa executada pela sobra de tempo ha uma atualização do periodo,
+    // logo vamos criar uma variavel auxiliar para ir moficiando o periodo ou nao
+    int *novPeriodo = (int *)calloc(numTasks, sizeof(int));
+
+    // preenchendo a variavel
+    for (int j = 0; j < numTasks; j++)
+    {
+        novPeriodo[j] = tasks[j].periodo;
+    }
+
+    // Divide as tarefas em ciclos usando o ciclo secundário
+    printf("\nEscalonamento Sugerido (Heurística: Highest Rate First - HRF):\n");
     printf("----------------------------------------------------------------------\n");
-    int ciclo_atual = 1;
     int tempo_atual = 0;
-    for (int i = 0; i < numTasks; i++) {
-        if (tempo_atual + tasks[i].tempo_execucao <= ciclo_primario) {
-            printf("Ciclo %d:\n", ciclo_atual);
-            printf("  - %s: tempo de execucao = %d, periodo = %d, prioridade = %d\n",
-                   tasks[i].id, tasks[i].tempo_execucao, tasks[i].periodo, tasks[i].prioridade);
-            tempo_atual += tasks[i].tempo_execucao;
-        } else {
-            ciclo_atual++;
-            printf("\nCiclo %d:\n", ciclo_atual);
-            printf("  - %s: tempo de execucao = %d, periodo = %d, prioridade = %d\n",
-                   tasks[i].id, tasks[i].tempo_execucao, tasks[i].periodo, tasks[i].prioridade);
-            tempo_atual = tasks[i].tempo_execucao;
+    int ciclo_atual = 1;
+
+    for (int ciclo = 1; ciclo <= ciclo_primario / ciclo_secundario; ciclo++)
+    {
+        printf("Ciclo Secundário %d:\n", ciclo);
+        int ciclo_restante = ciclo_secundario;
+
+        for (int i = 0; i < numTasks; i++)
+        {
+            // if (ciclo % (tasks[i].periodo / ciclo_secundario) == 0)
+            //{
+            if (tempo_atual % novPeriodo[i] == 0)
+            {
+                if (tasks[i].tempo_execucao <= ciclo_restante)
+                {
+                    printf("  - %s: tempo de execucao = %d, periodo = %d, prioridade = %d\n",
+                           tasks[i].id, tasks[i].tempo_execucao, tasks[i].periodo, tasks[i].prioridade);
+                    tarefaExecutada[i] = 1; // Marca a tarefa como executada
+                    ciclo_restante -= tasks[i].tempo_execucao;
+                }
+            }
+            //}
         }
+
+        for (int k = 0; k < numTasks; k++)
+        {
+            if (!tarefaExecutada[k] && tasks[k].tempo_execucao <= ciclo_restante)
+            {
+                printf("  - %s: tempo de execucao = %d, periodo = %d, prioridade = %d (executada no tempo restante)\n",
+                       tasks[k].id, tasks[k].tempo_execucao, tasks[k].periodo, tasks[k].prioridade);
+                tarefaExecutada[k] = 1;                    // Marca a tarefa como executada
+                ciclo_restante -= tasks[k].tempo_execucao; // Reduz o tempo restante no ciclo
+                novPeriodo[k] = tasks[k].periodo + (ciclo-1) * ciclo_secundario;
+            }
+        }
+        tempo_atual += ciclo_secundario;
+        ciclo_atual++;
     }
 }
 
-int main() {
-    FILE *file = fopen("tarefas.json", "r");
-    if (!file) {
+int main()
+{
+    FILE *file = fopen("tarefas2.json", "r");
+    if (!file)
+    {
         printf("Erro ao abrir o arquivo JSON.\n");
         return 1;
     }
@@ -79,7 +124,8 @@ int main() {
     fileContent[fileSize] = '\0';
 
     json_object *root = json_tokener_parse(fileContent);
-    if (!root) {
+    if (!root)
+    {
         printf("Erro ao analisar o arquivo JSON.\n");
         free(fileContent);
         return 1;
@@ -89,7 +135,8 @@ int main() {
     int numTasks = json_object_array_length(tasksJson);
     struct Task *tasks = malloc(numTasks * sizeof(struct Task));
 
-    for (int i = 0; i < numTasks; i++) {
+    for (int i = 0; i < numTasks; i++)
+    {
         json_object *taskJson = json_object_array_get_idx(tasksJson, i);
         json_object *idJson = json_object_object_get(taskJson, "id");
         json_object *periodoJson = json_object_object_get(taskJson, "periodo");
@@ -102,16 +149,20 @@ int main() {
         tasks[i].prioridade = json_object_get_int(prioridadeJson);
     }
 
+    // Cálculo dos ciclos primário e secundário
     int ciclo_primario, ciclo_secundario;
     calcularCiclos(tasks, numTasks, &ciclo_primario, &ciclo_secundario);
 
+    // Impressão dos ciclos calculados
     printf("Calculo de Ciclos para o Executivo Ciclico:\n");
     printf("-------------------------------------------\n");
     printf("Tempo de Ciclo Primario: %d unidades de tempo\n", ciclo_primario);
     printf("Tempo de Ciclo Secundario: %d unidades de tempo\n", ciclo_secundario);
 
-    dividirTarefasEmCiclos(tasks, numTasks, ciclo_primario);
+    // Divisão das tarefas em ciclos
+    dividirTarefasEmCiclos(tasks, numTasks, ciclo_primario, ciclo_secundario);
 
+    // Liberação de memória alocada
     json_object_put(root);
     free(fileContent);
     free(tasks);
