@@ -11,6 +11,7 @@ struct Task
     int prioridade;
 };
 
+// Função que calcula MDC
 int mdc(int a, int b)
 {
     if (b == 0)
@@ -18,11 +19,13 @@ int mdc(int a, int b)
     return mdc(b, a % b);
 }
 
+// Função que calcula MMC
 int mmc(int a, int b)
 {
     return (a * b) / mdc(a, b);
 }
 
+// Função que calcula o tempo do ciclo maior e do ciclo menor
 void calcularCiclos(struct Task tasks[], int n, int *ciclo_primario, int *ciclo_secundario)
 {
     *ciclo_primario = tasks[0].periodo;
@@ -48,14 +51,14 @@ void dividirTarefasEmCiclos(struct Task tasks[], int numTasks, int ciclo_primari
     // Ordena as tarefas por período em ordem crescente
     qsort(tasks, numTasks, sizeof(struct Task), compararPeriodo);
 
-    // Array para controlar se cada tarefa já foi executada em um ciclo secundário
+    // Array que controla se cada tarefa já foi executada em um ciclo secundário
     int *tarefaExecutada = (int *)calloc(numTasks, sizeof(int));
 
-    // Quando tarefa executada pela sobra de tempo ha uma atualização do periodo,
-    // logo vamos criar uma variavel auxiliar para ir moficiando o periodo ou nao
+    // Quando tarefa é executada pela sobra de tempo, ocorre uma atualização do periodo,
+    // Assim, é criada uma variável auxiliar para modificar ou não o periodo
     int *novPeriodo = (int *)calloc(numTasks, sizeof(int));
 
-    // preenchendo a variavel
+    // Preenche a variável auxiliar do período
     for (int j = 0; j < numTasks; j++)
     {
         novPeriodo[j] = tasks[j].periodo;
@@ -67,6 +70,7 @@ void dividirTarefasEmCiclos(struct Task tasks[], int numTasks, int ciclo_primari
     int tempo_atual = 0;
     int ciclo_atual = 1;
 
+    // LAço de execução para cada ciclo menor
     for (int ciclo = 1; ciclo <= ciclo_primario / ciclo_secundario; ciclo++)
     {
         printf("Ciclo Secundário %d:\n", ciclo);
@@ -74,8 +78,7 @@ void dividirTarefasEmCiclos(struct Task tasks[], int numTasks, int ciclo_primari
 
         for (int i = 0; i < numTasks; i++)
         {
-            // if (ciclo % (tasks[i].periodo / ciclo_secundario) == 0)
-            //{
+            // Para cada tarefa, verifica se está no período de execução e se há tempo de processamento suficiente
             if (tempo_atual % novPeriodo[i] == 0)
             {
                 if (tasks[i].tempo_execucao <= ciclo_restante)
@@ -85,25 +88,56 @@ void dividirTarefasEmCiclos(struct Task tasks[], int numTasks, int ciclo_primari
                     tarefaExecutada[i] = 1; // Marca a tarefa como executada
                     ciclo_restante -= tasks[i].tempo_execucao;
                 }
-            }
-            //}
-        }
-
-        for (int k = 0; k < numTasks; k++)
-        {
-            if (!tarefaExecutada[k] && tasks[k].tempo_execucao <= ciclo_restante)
+            } 
+            // Para cada tarefa, verifica se há tempo hábil para execução
+            else if (!tarefaExecutada[i] && tasks[i].tempo_execucao <= ciclo_restante)
             {
                 printf("  - %s: tempo de execucao = %d, periodo = %d, prioridade = %d (executada no tempo restante)\n",
-                       tasks[k].id, tasks[k].tempo_execucao, tasks[k].periodo, tasks[k].prioridade);
-                tarefaExecutada[k] = 1;                    // Marca a tarefa como executada
-                ciclo_restante -= tasks[k].tempo_execucao; // Reduz o tempo restante no ciclo
-                novPeriodo[k] = tasks[k].periodo + (ciclo-1) * ciclo_secundario;
+                       tasks[i].id, tasks[i].tempo_execucao, tasks[i].periodo, tasks[i].prioridade);
+                tarefaExecutada[i] = 1;                    // Marca a tarefa como executada
+                ciclo_restante -= tasks[i].tempo_execucao; // Reduz o tempo restante no ciclo
+                novPeriodo[i] = tasks[i].periodo + (ciclo-1) * ciclo_secundario;
             }
         }
+
+        // Atualiza o tempo e ciclo atual
         tempo_atual += ciclo_secundario;
         ciclo_atual++;
     }
 }
+
+
+// Função que calcula a viabilidade de escalonamento com base na utilização das tarefas definidas
+float calcularTaxaUtilizacao(struct Task tasks[], int numTasks)
+{
+    // Taxa de utilização total
+    float utilizacao_total = 0.0;
+
+    // Calcula a taxa de utilização de cada tarefa e adiciona à utilização total
+    for (int i = 0; i < numTasks; i++)
+    {
+        float utilizacao_tarefa = (float)tasks[i].tempo_execucao / (float)tasks[i].periodo;
+        utilizacao_total += utilizacao_tarefa;
+    }
+
+    // Imprime a taxa de utilização total do sistema
+    printf("Verificação de Escalonabilidade:\n");
+    printf("--------------------------------\n");
+    printf("Utilizacao: %.2f\n", utilizacao_total);
+
+    // Verifica se a taxa de utilização total é menor ou igual a 1 (viabilidade)
+    if (utilizacao_total <= 1.0)
+    {
+        printf("Escalonamento viavel.\n\n");
+    }
+    else
+    {
+        printf("Escalonamento nao viavel. Abortando calculos adicionais.\n\n");
+    }
+
+    return utilizacao_total;
+}
+
 
 int main()
 {
@@ -149,23 +183,37 @@ int main()
         tasks[i].prioridade = json_object_get_int(prioridadeJson);
     }
 
-    // Cálculo dos ciclos primário e secundário
-    int ciclo_primario, ciclo_secundario;
-    calcularCiclos(tasks, numTasks, &ciclo_primario, &ciclo_secundario);
+    // Cálculo da taxa de utilização total e verificação de viabilidade
+    float utilizacao_total = calcularTaxaUtilizacao(tasks, numTasks);
+    // Caso a utilização > 1, o escalonamento não é viável, e os calculos são abortados
+    if (utilizacao_total > 1.0) {
+        printf("Escalonamento nao viavel.\n");
+        // Liberação de memória alocada
+        json_object_put(root);
+        free(fileContent);
+        free(tasks);
+        return 1;
+    } else {
+        // Cálculo dos ciclos primário e secundário
+        int ciclo_primario, ciclo_secundario;
+        calcularCiclos(tasks, numTasks, &ciclo_primario, &ciclo_secundario);
 
-    // Impressão dos ciclos calculados
-    printf("Calculo de Ciclos para o Executivo Ciclico:\n");
-    printf("-------------------------------------------\n");
-    printf("Tempo de Ciclo Primario: %d unidades de tempo\n", ciclo_primario);
-    printf("Tempo de Ciclo Secundario: %d unidades de tempo\n", ciclo_secundario);
+        // Impressão dos ciclos calculados
+        printf("Calculo de Ciclos para o Executivo Ciclico:\n");
+        printf("-------------------------------------------\n");
+        printf("Tempo de Ciclo Primario: %d unidades de tempo\n", ciclo_primario);
+        printf("Tempo de Ciclo Secundario: %d unidades de tempo\n", ciclo_secundario);
 
-    // Divisão das tarefas em ciclos
-    dividirTarefasEmCiclos(tasks, numTasks, ciclo_primario, ciclo_secundario);
+        // Divisão das tarefas em ciclos
+        dividirTarefasEmCiclos(tasks, numTasks, ciclo_primario, ciclo_secundario);
 
-    // Liberação de memória alocada
-    json_object_put(root);
-    free(fileContent);
-    free(tasks);
+        // Liberação de memória alocada
+        json_object_put(root);
+        free(fileContent);
+        free(tasks);
+
+        return 0;
+    }
 
     return 0;
 }
