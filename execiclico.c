@@ -50,7 +50,7 @@ int verificarRequisitos(struct Task tasks[], int num_tarefas, int frame_size)
 {
     // Ordena as tarefas por período em ordem crescente
     qsort(tasks, num_tarefas, sizeof(struct Task), compararPeriodo);
-    int i;
+    int i, j;
     for (i = 0; i < num_tarefas; i++)
     {
         // Requisito #1
@@ -62,7 +62,10 @@ int verificarRequisitos(struct Task tasks[], int num_tarefas, int frame_size)
         // Requisito #2
         if (tasks[i].periodo % frame_size != 0)
         {
-            return 0; // Requisito #2 não cumprido
+            j++;
+            if(j == num_tarefas){
+                return 0; // Requisito #2 não cumprido
+            }
         }
 
         // Requisito #3
@@ -151,22 +154,12 @@ float calcularTaxaUtilizacao(struct Task tasks[], int numTasks)
     printf("--------------------------------\n");
     printf("Utilizacao: %.2f\n", utilizacao_total);
 
-    // Verifica se a taxa de utilização total é menor ou igual a 1 (viabilidade)
-    if (utilizacao_total <= 1.0)
-    {
-        printf("Escalonamento viavel.\n\n");
-    }
-    else
-    {
-        printf("Escalonamento nao viavel.\n\n");
-    }
-
     return utilizacao_total;
 }
 
 int main()
 {
-    FILE *file = fopen("tarefas4.json", "r");
+    FILE *file = fopen("tarefas5.json", "r");
     if (!file)
     {
         printf("Erro ao abrir o arquivo JSON.\n");
