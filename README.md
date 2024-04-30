@@ -16,6 +16,18 @@ Este projeto visa criar um sistema de executivo cíclico para calcular os tempos
 ## Maior Taxa de Periodicidade Primeiro (HRF)
 Nesta abordagem, as tarefas são priorizadas com base na frequência de sua execução; tarefas que devem ser executadas mais frequentemente têm prioridade. Isso é baseado na lógica de que tarefas com períodos mais curtos são geralmente mais críticas e, portanto, devem ser atendidas com maior prioridade para evitar a violação de seus prazos.
 
+## Requisitos
+- **Requisito 1**
+    - O tamanho do frame deve ser maior ou igual ao maior tempo de execução de uma tarefa. Em outras palavras:
+    - 𝑓 ≥ max(e𝑖)
+    - Onde 𝑓 é o tamanho do frame e e𝑖 o tempo de execução.
+- **Requisito 2**
+    - O tamanho de frames candidatos devem caber igualmente dentro de um ciclo maior.
+- **Requisito 3**
+    - Deve existir um frame entre o release-time (𝑡′) e o deadline (𝑡′ + 𝐷𝑖) de todos os jobs. Em outras palavras:
+    - 2𝑓 – mdc(P𝑖, 𝑓) ≤ 𝐷𝑖
+    - Onde 𝑓 é o tamanho do frame, P𝑖 o período de uma task e 𝐷𝑖 a deadline.
+
 ## Sobre o JSON
 Para manipulação de JSON, uma tarefa comum em configurações, comunicação entre sistemas ou interfaces de programação de aplicativos, foi utilizada a biblioteca json-c. Esta biblioteca fornece uma implementação completa de JSON com funções para analisar strings JSON e formatar dados C para strings JSON. Ela é adequada para integrar funcionalidades JSON em aplicativos C ou para trabalhar com JSON recebido de APIs e serviços externos.
 
