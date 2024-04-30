@@ -52,7 +52,7 @@ gcc execiclico.c -o execiclico -ljson-c
 ## Demonstração e Explicação
 [Youtube - Executivo Cíclico](https://youtu.be/_LY46sBgA3U)
 
-## Team
+## Equipe
 
 - [Clarice Soares](https://github.com/claricesoares)
 
