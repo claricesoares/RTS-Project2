@@ -48,3 +48,14 @@ gcc execiclico.c -o execiclico -ljson-c
 ```bash
 ./execiclico
 ```
+
+## Demonstração e Explicação
+[Youtube - Executivo Cíclico](https://youtu.be/_LY46sBgA3U)
+
+## Team
+
+- [Clarice Soares](https://github.com/claricesoares)
+
+- [Julia Ramalho](https://github.com/ramalhocsjulia)
+
+- [Samara Cardoso](https://github.com/SamaraLimaCardoso)
