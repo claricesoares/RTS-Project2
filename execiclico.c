@@ -62,10 +62,7 @@ int verificarRequisitos(struct Task tasks[], int num_tarefas, int frame_size)
         // Requisito #2
         if (tasks[i].periodo % frame_size != 0)
         {
-            j++;
-            if(j == num_tarefas){
-                return 0; // Requisito #2 não cumprido
-            }
+            return 0; // Requisito #2 não cumprido
         }
 
         // Requisito #3
@@ -75,6 +72,46 @@ int verificarRequisitos(struct Task tasks[], int num_tarefas, int frame_size)
         }
     }
     return 1; // Todos os requisitos atendidos
+}
+int encontrarFrame(struct Task tasks[], int num_tarefas, int ciclo_primario)
+{
+    // Ordena as tarefas por período em ordem crescente
+    qsort(tasks, num_tarefas, sizeof(struct Task), compararPeriodo);
+    // variavel pra armazenar o maior frame size
+    int frame_size = 0;
+
+    for (int j = 1; j <= ciclo_primario; j++)
+    {
+        if (ciclo_primario % j == 0)
+        {
+            // verifica se pra esse divisor do ciclo primario todos os requisitos são aceitos
+            for (int i = 0; i < num_tarefas; i++)
+            {
+                // Requisito #1
+                if (j < tasks[i].tempo_execucao)
+                {
+                    // Requisito #2
+                    if ((tasks[i].periodo % j) != 0)
+                    {
+                        printf("ENTREI AQ SEUS PORRA: %d \n", j);
+                        // Requisito #3
+                        if (2 * j - mdc(tasks[i].periodo, j) > tasks[i].periodo)
+                        {
+
+                            return 0;
+                        }
+
+
+                    }
+                }
+            }
+        }
+
+        if (j == ciclo_primario)
+        {
+            return frame_size;
+        }
+    }
 }
 void dividirTarefasEmCiclos(struct Task tasks[], int numTasks, int ciclo_primario, int ciclo_secundario)
 {
@@ -159,7 +196,7 @@ float calcularTaxaUtilizacao(struct Task tasks[], int numTasks)
 
 int main()
 {
-    FILE *file = fopen("tarefas5.json", "r");
+    FILE *file = fopen("tarefas6.json", "r");
     if (!file)
     {
         printf("Erro ao abrir o arquivo JSON.\n");
@@ -206,7 +243,7 @@ int main()
     // Caso a utilização > 1, o escalonamento não é viável, e os calculos são abortados
     if (utilizacao_total > 1.0)
     {
-        printf("Escalonamento nao viavel.\n");
+        printf("Escalonamento nao viavel.\n\n");
         // Liberação de memória alocada
         json_object_put(root);
         free(fileContent);
@@ -215,14 +252,15 @@ int main()
     }
     else
     {
+        printf("Escalonamento viavel.\n\n");
         // Cálculo dos ciclos primário e secundário
         int ciclo_primario, ciclo_secundario;
         calcularCiclos(tasks, numTasks, &ciclo_primario, &ciclo_secundario);
         // Verificar se os requisitos são atendidos
         // Imprime a taxa de utilização total do sistema
-        printf("Verificação dos Requisitos:\n");
-        printf("--------------------------------\n");
-        if (verificarRequisitos(tasks, numTasks, ciclo_secundario))
+        printf("Escolha do Frame Verificando os Requisitos:\n");
+        printf("-------------------------------------------\n");
+        if (verificarRequisitos( tasks,  numTasks, ciclo_secundario) > 0)
         {
             printf("Tamanho do frame: %d\n", ciclo_secundario);
             printf("Requisitos cumpridos \n\n");
@@ -243,9 +281,34 @@ int main()
 
             return 0;
         }
-        else
+        else // como o ciclo secundario pelo mdc n atende requisitos procurar um q atenda
         {
-            printf("Os requisitos não estão sendo cumpridos para o tamanho do frame %d.\n", ciclo_secundario);
+            ciclo_secundario = encontrarFrame(tasks, numTasks, ciclo_primario);
+            if (ciclo_secundario > 0)
+            {
+                printf("Tamanho do frame: %d\n", ciclo_secundario);
+                printf("Requisitos cumpridos \n\n");
+                printf("-------------------------------------------\n");
+                // Impressão dos ciclos calculados
+                printf("Calculo de Ciclos para o Executivo Ciclico:\n");
+                printf("-------------------------------------------\n");
+                printf("Tempo de Ciclo Primario: %d unidades de tempo\n", ciclo_primario);
+                printf("Tempo de Ciclo Secundario: %d unidades de tempo\n", ciclo_secundario);
+
+                // Divisão das tarefas em ciclos
+                dividirTarefasEmCiclos(tasks, numTasks, ciclo_primario, ciclo_secundario);
+
+                // Liberação de memória alocada
+                json_object_put(root);
+                free(fileContent);
+                free(tasks);
+
+                return 0;
+            }
+            else
+            {
+                printf("Os requisitos não estão sendo cumpridos para nenhum frame \n");
+            }
         }
     }
 

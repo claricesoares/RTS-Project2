@@ -1,0 +1,34 @@
+{
+    "tarefas": [
+      {
+        "id": "Tarefa1",
+        "periodo": 25,
+        "tempo_execucao": 10,
+        "prioridade": 1
+      },
+      {
+        "id": "Tarefa2",
+        "periodo": 25,
+        "tempo_execucao": 8,
+        "prioridade": 2
+      },
+      {
+        "id": "Tarefa3",
+        "periodo": 50,
+        "tempo_execucao": 5,
+        "prioridade": 1
+      },
+      {
+        "id": "Tarefa4",
+        "periodo": 50,
+        "tempo_execucao": 4,
+        "prioridade": 2
+      },
+      {
+        "id": "Tarefa5",
+        "periodo": 100,
+        "tempo_execucao": 2,
+        "prioridade": 1
+      }
+    ]
+  }
