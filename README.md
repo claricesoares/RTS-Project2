@@ -6,7 +6,7 @@ Este projeto visa criar um sistema de executivo cíclico para calcular os tempos
 ## Funcionalidades
 - **Cálculo dos tempos de ciclo:**
     - Tempo de ciclo primário: calculado como o mínimo múltiplo comum (MMC) dos períodos das tarefas, representando o ciclo maior que sincroniza todas as tarefas em sua periodicidade.
-    - Tempo de ciclo secundário: determinado como o maior divisor comum (MDC) dos períodos das tarefas, representando o menor ciclo possível que ainda respeita as periodicidades das tarefas.
+    - Tempo de ciclo secundário: determinado como o maior divisor comum (MDC) dos períodos das tarefas, representando o menor ciclo possível que ainda respeita as periodicidades das tarefas. Caso o MDC não obedeça aos requisitos, serão calculados os possíveis frames, analisando o cumprimento dos requisitos para cada um deles. Caso nenhum candidato esteja em conformidade, o escalonamento não é realizável.
 
 - **Cálculo do escalonamento usando heurísticas:**
     - Após determinar os tempos de ciclo, o sistema aplica uma heurística (neste caso, Maior Taxa de Periodicidade Primeiro) para sugerir um escalonamento otimizado das tarefas dentro do ciclo determinado.
@@ -51,6 +51,7 @@ gcc execiclico.c -o execiclico -ljson-c
 
 ## Demonstração e Explicação
 [Youtube - Executivo Cíclico](https://youtu.be/_LY46sBgA3U)
+obs.: no vídeo, é apresentada uma versão anterior (e desatualizada) do código, em que os possível frames não eram verificados.
 
 ## Equipe
 
