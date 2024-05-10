@@ -82,23 +82,22 @@ int encontrarFrame(struct Task tasks[], int num_tarefas, int ciclo_primario)
 
     for (int j = 1; j <= ciclo_primario; j++)
     {
-        if (ciclo_primario % j == 0)
+        if (ciclo_primario % j == 0)// Requisito #2
         {
             // verifica se pra esse divisor do ciclo primario todos os requisitos são aceitos
             for (int i = 0; i < num_tarefas; i++)
             {
                 // Requisito #1
-                if (j < tasks[i].tempo_execucao)
+                if (j > tasks[i].tempo_execucao)
                 {
-                    // Requisito #2
-                    if ((tasks[i].periodo % j) != 0)
+                    // Requisito #2.5
+                    if ((tasks[i].periodo % j) == 0)
                     {
-                        printf("ENTREI AQ SEUS PORRA: %d \n", j);
-                        // Requisito #3
-                        if (2 * j - mdc(tasks[i].periodo, j) > tasks[i].periodo)
-                        {
 
-                            return 0;
+                        // Requisito #3
+                        if (2 * j - mdc(tasks[i].periodo, j) < tasks[i].periodo)
+                        {
+                            return frame_size;
                         }
 
 
@@ -107,10 +106,6 @@ int encontrarFrame(struct Task tasks[], int num_tarefas, int ciclo_primario)
             }
         }
 
-        if (j == ciclo_primario)
-        {
-            return frame_size;
-        }
     }
 }
 void dividirTarefasEmCiclos(struct Task tasks[], int numTasks, int ciclo_primario, int ciclo_secundario)
@@ -196,7 +191,7 @@ float calcularTaxaUtilizacao(struct Task tasks[], int numTasks)
 
 int main()
 {
-    FILE *file = fopen("tarefas6.json", "r");
+    FILE *file = fopen("tarefas4.json", "r");
     if (!file)
     {
         printf("Erro ao abrir o arquivo JSON.\n");
